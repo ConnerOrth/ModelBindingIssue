@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29509.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModelBindingIssue", "ModelBindingIssue\ModelBindingIssue.csproj", "{1DD96CF4-4321-4A19-9FA4-0FE6DA9537F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{9A25033A-4410-4B48-959A-EB2396CC95AA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1DD96CF4-4321-4A19-9FA4-0FE6DA9537F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DD96CF4-4321-4A19-9FA4-0FE6DA9537F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DD96CF4-4321-4A19-9FA4-0FE6DA9537F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DD96CF4-4321-4A19-9FA4-0FE6DA9537F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A25033A-4410-4B48-959A-EB2396CC95AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A25033A-4410-4B48-959A-EB2396CC95AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A25033A-4410-4B48-959A-EB2396CC95AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A25033A-4410-4B48-959A-EB2396CC95AA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AC36122D-4B2E-43DA-80E3-FE981BEFD03C}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,10 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@model ModelBindingIssue.Controllers.ViewModel
+
+<form asp-action="Post">
+    <input asp-for="Name" />
+    <input asp-for="Number" />
+    <input type="submit" />
+</form>
