@@ -18,7 +18,7 @@ namespace ModelBindingIssue.Pages.Components.BaseDialogItems
         //public async Task<IViewComponentResult> InvokeAsync(ItemWrapperViewModel interactionModelSectionItemViewModel)
         public async Task<IViewComponentResult> InvokeAsync(BaseDialogItemViewModel dialogItemViewModel)
         {
-            Type type = Type.GetType(dialogItemViewModel.DialogItemType);
+            Type type = Type.GetType(dialogItemViewModel.EntityType);
 
             if (!ViewComponentContext.ViewExists(type.Name))
             {

@@ -28,6 +28,7 @@ namespace ModelBindingIssue.Models
     public abstract class AbstractBaseViewModel : BaseViewModel
     {
         public string ActualType => GetType().AssemblyQualifiedName;
+        public string EntityType { get; set; }
 
         public AbstractBaseViewModel()
         {
@@ -35,13 +36,12 @@ namespace ModelBindingIssue.Models
 
         protected AbstractBaseViewModel(BaseEntity baseEntity) : base(baseEntity)
         {
+            EntityType = baseEntity.GetType().AssemblyQualifiedName;
         }
     }
 
     public class BaseDialogItemViewModel : AbstractBaseViewModel
     {
-        public string DialogItemType { get; set; }
-
         public Guid InteractionModelSectionId { get; set; }
         public string Name { get; set; }
         public int Ordering { get; set; }
@@ -52,7 +52,6 @@ namespace ModelBindingIssue.Models
         public BaseDialogItemViewModel() { }
         public BaseDialogItemViewModel(BaseDialogItem dialogItem) : base(dialogItem)
         {
-            DialogItemType = dialogItem.GetType().AssemblyQualifiedName;
             FromDialogItem(dialogItem);
         }
 
@@ -63,7 +62,7 @@ namespace ModelBindingIssue.Models
                 return (BaseDialogItem)mapperMethod.Invoke(this, null);
             }
 
-            Type type = Type.GetType(DialogItemType);
+            Type type = Type.GetType(EntityType);
 
             MethodInfo method = GetType().GetMethod(nameof(BaseDialogItemViewModel.To), BindingFlags.NonPublic | BindingFlags.Instance);
             MethodInfo generic = method.MakeGenericMethod(type);
@@ -84,7 +83,7 @@ namespace ModelBindingIssue.Models
                 return;
             }
 
-            Type type = Type.GetType(DialogItemType);
+            Type type = Type.GetType(EntityType);
 
             MethodInfo method = GetType().GetMethod(nameof(BaseDialogItemViewModel.From), BindingFlags.NonPublic | BindingFlags.Instance);
             MethodInfo generic = method.MakeGenericMethod(type);
