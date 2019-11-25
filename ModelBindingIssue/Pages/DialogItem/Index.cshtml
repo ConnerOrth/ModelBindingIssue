@@ -1,0 +1,11 @@
+﻿@page "{handler?}"
+@model ModelBindingIssue.Pages.IndexModel
+
+@{
+    Layout = null;
+}
+@if (Model.DialogItem != null)
+{
+    <partial name="_BaseViewModel" Model="Model.DialogItem" />
+}
+<vc:base-dialog-item interaction-model-section-item-view-model="@Model.InteractionModelSectionItemViewModel"></vc:base-dialog-item>

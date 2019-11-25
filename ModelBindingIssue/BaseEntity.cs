@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ModelBindingIssue.Models
+namespace ModelBindingIssue
 {
     public abstract class BaseEntity
     {
@@ -11,7 +11,5 @@ namespace ModelBindingIssue.Models
 
         public DateTimeOffset DateCreated { get; private set; } = DateTimeOffset.Now;
         public DateTimeOffset DateModified { get; private set; } = DateTimeOffset.Now.AddSeconds(30);
-
-        public byte[] RowVersion { get; set; }
     }
 }

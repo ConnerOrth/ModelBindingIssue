@@ -1,0 +1,11 @@
+﻿@model ItemWrapperViewModel
+<div class="form-group">
+    <label asp-for="DialogItem.MinimumAmountOfStars" class="control-label"></label>
+    <input asp-for="DialogItem.MinimumAmountOfStars" class="form-control" />
+    <span asp-validation-for="DialogItem.MinimumAmountOfStars" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="DialogItem.MaximumAmountOfStars" class="control-label"></label>
+    <input asp-for="DialogItem.MaximumAmountOfStars" class="form-control" />
+    <span asp-validation-for="DialogItem.MaximumAmountOfStars" class="text-danger"></span>
+</div>

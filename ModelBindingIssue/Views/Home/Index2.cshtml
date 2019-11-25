@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@model ModelBindingIssue.Models.BaseDialogItemViewModel
+
+<form asp-action="Post">
+    <input asp-for="Type" />
+    <input asp-for="Id" />
+    <input asp-for="Name" />
+    <input type="submit" />
+</form>

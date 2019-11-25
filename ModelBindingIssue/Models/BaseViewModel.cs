@@ -1,19 +1,19 @@
-﻿using ModelBindingIssue.Helpers;
+﻿using ModelBindingIssue.Entities;
+using ModelBindingIssue.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
 namespace ModelBindingIssue.Models
 {
-    public abstract class BaseViewModel
+    public abstract class BaseViewModel : BaseEntity
     {
-        public Guid Id { get; set; }
-        public byte[] RowVersion { get; set; }
-
         public BaseViewModel()
         {
+            //required by MVC Views, viewmodels need to have a public parameterless constructor.
         }
 
         protected BaseViewModel(BaseEntity baseEntity)
@@ -21,25 +21,54 @@ namespace ModelBindingIssue.Models
             if (baseEntity == null) return;
 
             Id = baseEntity.Id;
-            RowVersion = baseEntity.RowVersion;
         }
     }
 
-    public class BaseDialogItemViewModel : BaseViewModel
+    [DebuggerStepThrough]
+    public abstract class AbstractBaseViewModel : BaseViewModel
     {
-        private static readonly string @namespace = typeof(BaseDialogItem).Namespace;
-        private static readonly string assemblyName = typeof(BaseDialogItem).Assembly.FullName;
+        public Type Type { get; set; }
+
+        public AbstractBaseViewModel()
+        {
+        }
+
+        protected AbstractBaseViewModel(BaseEntity baseEntity) : base(baseEntity)
+        {
+        }
+    }
+
+    public class BaseDialogItemViewModel : AbstractBaseViewModel
+    {
+        public Guid InteractionModelSectionId { get; set; }
+        public string Name { get; set; }
+        public int Ordering { get; set; }
+        public int MinimumAmountOfStars { get; set; }
+        public int MaximumAmountOfStars { get; set; }
+
 
         public BaseDialogItemViewModel() { }
-
         public BaseDialogItemViewModel(BaseDialogItem dialogItem) : base(dialogItem)
         {
+            viewModelType = Type.GetType($"{typeof(BaseDialogItemViewModel).Namespace}.{dialogItem.GetType().Name}ViewModel, {typeof(BaseDialogItemViewModel).Assembly.FullName}");
             FromDialogItem(dialogItem);
         }
 
+        private readonly Type viewModelType = Type.GetType($"{typeof(BaseDialogItemViewModel).Namespace}.{nameof(BaseDialogItemViewModel)}, {typeof(BaseDialogItemViewModel).Assembly.FullName}");
+
+        private static readonly string @namespace = typeof(BaseDialogItem).Namespace;
+        private static readonly string assemblyName = typeof(BaseDialogItem).Assembly.FullName;
+
         public BaseDialogItem ToDialogItem(string className)
         {
-            Type type = Type.GetType($"{@namespace}.{className}, {assemblyName}");
+            Type type = Type = Type.GetType($"{@namespace}.{className}, {assemblyName}");
+
+            var mapper = viewModelType.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapper<>));
+            var mapperMethod = mapper?.GetMethod(nameof(IMapper<object>.Map));
+            if (mapperMethod is object)
+            {
+                return (BaseDialogItem)mapperMethod.Invoke(this, null);
+            }
 
             MethodInfo method = GetType().GetMethod(nameof(BaseDialogItemViewModel.To), BindingFlags.NonPublic | BindingFlags.Instance);
             MethodInfo generic = method.MakeGenericMethod(type);
@@ -53,68 +82,25 @@ namespace ModelBindingIssue.Models
             return @base;
         }
 
-        private BaseDialogItemViewModel FromDialogItem(BaseDialogItem dialogItem)
+        private void FromDialogItem(BaseDialogItem dialogItem)
         {
             Type type = Type.GetType($"{@namespace}.{dialogItem.GetType().Name}, {assemblyName}");
 
+            var mapper = viewModelType?.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapper<>));
+            var mapperMethod = mapper?.GetMethod(nameof(IMapper<object>.Map));
+            if (mapperMethod is object)
+            {
+                return;
+            }
+
             MethodInfo method = GetType().GetMethod(nameof(BaseDialogItemViewModel.From), BindingFlags.NonPublic | BindingFlags.Instance);
             MethodInfo generic = method.MakeGenericMethod(type);
-            return (BaseDialogItemViewModel)generic.Invoke(this, new[] { dialogItem });
+            generic.Invoke(this, new[] { dialogItem });
         }
 
         private void From<TBaseDialogItem>(TBaseDialogItem dialogItem) where TBaseDialogItem : BaseDialogItem
         {
             PropertyCopy.Copy(dialogItem, this);
         }
-
-
-        public string Name { get; set; }
-        public string ChildName { get; set; }
-        public string AnotherName { get; set; }
-
-        public IList<Mapping> Mappings { get; set; } = new List<Mapping>()
-        {
-            new Mapping(){Key="key1",Value="value1"},
-            new Mapping(){Key="key2",Value="value2"}
-        };
     }
-
-    public class Mapping
-    {
-        public string Key { get; set; }
-        public string Value { get; set; }
-    }
-
-    public class BackendClassContainingMapping : BaseDialogItem
-    {
-        public IList<Mapping> Mappings { get; set; } = new List<Mapping>();
-    }
-    //public class CustomerViewModel : BaseDialogItemViewModel<Customer>
-    //{
-    //    public string Name { get; set; }
-    //    public int Age { get; set; }
-
-    //    public override Customer Map()
-    //    {
-    //        var customer = new Customer(Name);
-    //        customer.SetAge(Age);
-    //        return customer;
-    //    }
-    //}
-
-    //public class Customer : BaseEntity
-    //{
-    //    public string Name { get; set; }
-    //    public int Age { get; private set; }
-
-    //    private Customer()
-    //    {
-    //    }
-
-    //    public Customer(string name)
-    //    {
-    //        Name = name;
-    //    }
-    //    public void SetAge(int age) => Age = age;
-    //}
 }

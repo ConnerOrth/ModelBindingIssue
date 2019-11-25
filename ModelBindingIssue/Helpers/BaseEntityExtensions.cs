@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ModelBindingIssue.Helpers
 {
@@ -12,6 +11,12 @@ namespace ModelBindingIssue.Helpers
             where TViewModel : BaseViewModel
         {
             return (TViewModel)Activator.CreateInstance(typeof(TViewModel), entity);
+        }
+
+        public static IEnumerable<TViewModel> ToViewModel<TViewModel>(this IEnumerable<BaseEntity> entities)
+            where TViewModel : BaseViewModel
+        {
+            return entities.Select(ToViewModel<TViewModel>);
         }
     }
 }

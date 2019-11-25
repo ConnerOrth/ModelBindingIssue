@@ -6,7 +6,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ModelBindingIssue.Entities;
+using ModelBindingIssue.Factories;
+using ModelBindingIssue.Helpers;
 using ModelBindingIssue.Models;
+using Newtonsoft.Json;
 
 namespace ModelBindingIssue.Controllers
 {
@@ -21,19 +25,93 @@ namespace ModelBindingIssue.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            var hemaDialogItem = Database.HemaDialogItem;
+
+            HemaDialogItemViewModel model = (HemaDialogItemViewModel)DialogItemViewModelFactory.GetViewModel(hemaDialogItem);
+            return View(model);
+        }
+
+        public IActionResult Index2()
+        {
+            var baseDialogItem = new BaseFlowDialogItem() { Name = "HemaItem" };
+
+            BaseDialogItemViewModel model = DialogItemViewModelFactory.GetViewModel(baseDialogItem);
+            return View(model);
         }
 
         [HttpPost]
-        public IActionResult Post([Bind("Name,Number")] ViewModel model)
+        //public IActionResult Post([Bind("Id,Name,Number,Mappings,ResponseNoPackages")] BaseDialogItemViewModel model)
+        public IActionResult Post(AbstractBaseViewModel model)
         {
+            string form = null;
+            foreach (var item in Request.Form)
+            {
+                form += $"{{\"{item.Key}\",\"{item.Value}\"}}," + Environment.NewLine;
+            }
             if (ModelState.IsValid)
             {
-                return View(nameof(Index));
+                return RedirectToAction(nameof(Index));
             }
-            DBModel dbModel = model.Map();
-            return View(nameof(Index), new ViewModel() { Name = model.Name, Number = model.Number });
+            return RedirectToAction(nameof(Index));
         }
+
+        public IActionResult Create()
+        {
+            return View(new ItemWrapperViewModel(null) { InteractionModelSectionId = Database.Section.Id });
+        }
+
+        [HttpPost]
+        //public async Task<IActionResult> Create([Bind("Enabled,InteractionModelSectionId,SelectedDialogItemType,DialogItem")] ItemWrapperViewModel interactionModelSectionItemViewModel)
+        public async Task<IActionResult> Create(AbstractBaseViewModel model)
+        {
+            string form = null;
+            foreach (var item in Request.Form)
+            {
+                form += $"{{\"{item.Key}\",\"{item.Value}\"}}," + Environment.NewLine;
+            }
+            if (ModelState.IsValid)
+            {
+                //InteractionModelSection section = await interactionModelService.GetInteractionModelSectionById(interactionModelSectionItemViewModel.InteractionModelSectionId);
+                //if (section == null)
+                //{
+                //    return NotFound();
+                //}
+
+                //InteractionModelSectionItem sectionItem = new InteractionModelSectionItem
+                //{
+                //    //Note: This is because the ordering of the SectionItem  is non-changeable at this create view.
+                //    Ordering = interactionModelSectionItemViewModel.DialogItem.Ordering,
+                //    Enabled = interactionModelSectionItemViewModel.Enabled,
+                //    InteractionModelSectionId = interactionModelSectionItemViewModel.InteractionModelSectionId,
+                //    DialogItem = interactionModelSectionItemViewModel.DialogItem.ToDialogItem(interactionModelSectionItemViewModel.SelectedDialogItemType)
+                //};
+
+                //await sectionItemRepository.AddAsync(sectionItem);
+                //return RedirectToAction(nameof(DetailsSection), new { ids });
+            }
+            _logger.LogDebug(JsonConvert.SerializeObject(model, Formatting.Indented));
+            return View(new ItemWrapperViewModel(null) { InteractionModelSectionId = Database.Section.Id });
+        }
+
+        public IActionResult Edit()
+        {
+            var hemaDialogItem = Database.HemaDialogItem;
+
+            ItemWrapperViewModel itemWrapper = new ItemWrapperViewModel(hemaDialogItem);
+            TempData.Set<BaseDialogItem>(itemWrapper.DialogItem.GetType().Name, hemaDialogItem);
+
+            return View(itemWrapper);
+        }
+        //[HttpPost]
+        //public IActionResult Post([Bind("Name,Number")] ViewModel model)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        return View(nameof(Index));
+        //    }
+        //    DBModel dbModel = model.Map();
+        //    return View(nameof(Index), new ViewModel() { Name = model.Name, Number = model.Number });
+        //}
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
@@ -42,7 +120,7 @@ namespace ModelBindingIssue.Controllers
         }
     }
 
-    public class ViewModel : IMap<DBModel>
+    public class ViewModel : IMapper<DBModel>
     {
         [Required(ErrorMessage = "The name property is a required property.")]
         public string Name { get; set; }

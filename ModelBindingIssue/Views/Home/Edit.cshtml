@@ -1,0 +1,79 @@
+﻿@model ItemWrapperViewModel
+@{
+    ViewData["Title"] = "Edit";
+}
+<div class="row">
+    <div class="col-10 offset-1 col-md-3 offset-md-1">
+        <span class="alert-danger">@Html.ValidationSummary()</span>
+    </div>
+</div>
+<style>
+    textarea.form-control {
+        width: 100%;
+        height: 100px;
+        font-weight: 300;
+        font-size: .8rem;
+        border-radius: 5px;
+    }
+</style>
+<div class="content-body">
+    <div class="card">
+        <form asp-action="Edit" id="EditInteractionModelSectionItem">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <partial name="_BaseViewModel" model="Model" />
+            <input type="hidden" asp-for="InteractionModelSectionId" />
+            <input type="hidden" asp-for="DialogItemId" />
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-10 col-lg-6">
+                        <h2>["EditSectionItem"]</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-lg-6">
+                        <div class="form-group">
+                            <select asp-for="SelectedDialogItemType" asp-items="Model.DialogItemTypes" class="form-control"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-lg-6" id="dialogItemContainer">
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <!-- Submit button -->
+                <input class="btn btn-primary" value="Save" type="submit" />
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts
+{
+    <script>
+        $("#SelectedDialogItemType").change(this, LoadViewComponentForType);
+        $("#SelectedDialogItemType").change();
+        function LoadViewComponentForType(event) {
+            var selectElement = $(event.target);
+            var dialogItemContainer = $("#dialogItemContainer");
+            console.log($("#EditInteractionModelSectionItem").serialize());
+            //console.log(dialogItemContainer);
+            $.ajax({
+                url: '/DialogItem/Update',
+                method: "POST",
+                headers: {
+                    RequestVerificationToken:
+                        $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                data: $("#EditInteractionModelSectionItem").serialize()
+            })
+                .done(function (result) {
+                    $(dialogItemContainer).html(result);
+                })
+                .fail(function (result) {
+                    $(dialogItemContainer).html("An error occured.");
+                    console.error("error: " + result.status);//TODO: change to better error handling
+                });
+        }
+    </script>
+}

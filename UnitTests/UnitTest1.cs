@@ -1,43 +1,13 @@
+using ModelBindingIssue.Entities;
+using ModelBindingIssue.Factories;
 using ModelBindingIssue.Models;
-using System;
-using Xunit;
-using ModelBindingIssue.Helpers;
 using System.Collections.Generic;
-using System.Linq;
+using Xunit;
 
 namespace UnitTests
 {
     public class UnitTest1
     {
-        [Fact]
-        public void DialogVM_To_BaseEntity()
-        {
-            var child = new ChildDialogItem()
-            {
-                Name = "__child",
-                ChildName = nameof(ChildDialogItem) + DateTime.Now.ToString()
-            };
-            var another = new AnotherDialogItem()
-            {
-                Name = "__another",
-                AnotherName = nameof(AnotherDialogItem) + DateTime.Now.ToString()
-            };
-
-            var withMapping = new WithMapping(new List<Mapping>() { Mapping.Create("k1", "v1") });
-
-            var x = new BaseDialogItemViewModel(child);
-            var y = new BaseDialogItemViewModel(another);
-            var z = new BaseDialogItemViewModel(withMapping);
-
-            var xx = x.ToDialogItem(child.GetType().Name);
-            var yy = y.ToDialogItem(another.GetType().Name);
-            var zz = z.ToDialogItem(withMapping.GetType().Name);
-
-            Assert.True(((WithMapping)zz).Mappings.Count == 1);
-            Assert.True(((WithMapping)zz).Mappings[0].Key == withMapping.Mappings[0].Key);
-            Assert.True(((WithMapping)zz).Mappings[0].Value == withMapping.Mappings[0].Value);
-        }
-
         [Fact]
         public void ChildVM_To_BaseEntity()
         {
@@ -63,156 +33,60 @@ namespace UnitTests
             Assert.True(backend.Mappings.Count == 1);
             Assert.True(backend.Mappings[0].Key == "key123");
         }
-    }
 
-    //*******************************************************//
-    //below are the classes and interfaces used by the tests.//
-    //*******************************************************//
-    //we dont use a type constraint on TDestination, or a new() constraint
-    //because entities might have a private constructor and/or a constructor
-    //which requires parameters
-    public interface IMapper<out TDestination>
-    {
-        TDestination Map();
-    }
-
-    //frontend VMs/DTOs are build with composition
-    public abstract class BaseVM : BaseEntity
-    {
-        public BaseVM()
+        [Fact]
+        public void ChildVM_To_BaseEntity_WithRedirectViaToDialogItem()
         {
-            //required by MVC Views, viewmodels needs to have a public parameterless constructor.
-        }
-
-        protected BaseVM(BaseEntity baseEntity)
-        {
-            if (baseEntity == null) return;
-
-            Id = baseEntity.Id;
-            RowVersion = baseEntity.RowVersion;
-        }
-    }
-
-    public class BaseDialogVM : BaseVM
-    {
-        public string Name { get; set; }
-
-        public BaseDialogVM(BaseEntity baseEntity) : base(baseEntity)
-        {
-        }
-    }
-
-    public class ParentVM : BaseDialogVM, IMapper<Parent>
-    {
-        public int Age { get; set; }
-
-        public ParentVM(Parent parent) : base(parent)
-        {
-            Name = parent.Name;
-            Age = parent.Age;
-        }
-
-        public Parent Map()
-        {
-            return new Parent()
+            var childvm = new ChildVM(new Child()
             {
-                Name = Name,
-                Age = Age,
-                Id = Id,
-                RowVersion = RowVersion
-            };
-        }
-    }
+                Name = "__child",
+                Hobby = "__hobby",
+                Age = 8,
+            });
 
-    //childvm no longer has a name or age, but is able,
-    //to use the private parentvm to create a complete child object
-    public class ChildVM : BaseDialogVM, IMapper<Child>
-    {
-        private readonly ParentVM parentVM;
-        public string Hobby { get; set; }
-        public IList<Mapping> Mappings { get; set; } = new List<Mapping>();
-
-        public ChildVM(Child child) : base(child)
-        {
-            parentVM = child.ToVM<ParentVM>();
-        }
-
-        public Child Map()
-        {
-            return new Child()
+            var withMappingVM = new BackendClassContainingMappingVM(new WithMapping(new List<Mapping>() { Mapping.Create("key123", "value123") })
             {
-                Name = parentVM.Name,
-                Age = parentVM.Age,
-                Hobby = Hobby
-            };
+                Name = "__backend",
+                Hobby = "__mapping",
+                Age = 8,
+            });
+
+            BaseDialogItem child = childvm.ToDialogItem(typeof(ChildVM).Name);
+            Assert.IsType<Child>(child);
+
+            Parent parent = childvm.Map();
+
+            WithMapping backend = withMappingVM.Map();
+            Child backendChild = withMappingVM.Map();
+            Assert.True(backend.Mappings.Count == 1);
+            Assert.True(backend.Mappings[0].Key == "key123");
         }
-    }
-    public class BackendClassContainingMappingVM : BaseDialogVM, IMapper<WithMapping>
-    {
-        private readonly ChildVM childVM;
-        public string Hobby { get; set; }
-        public IList<Mapping> Mappings { get; } = new List<Mapping>()
+
+        private static readonly IList<HemaStatusMap> statusMaps = new List<HemaStatusMap>()
         {
-            Mapping.Create("321yek","321eulav"),
-            Mapping.Create("654yek","654eulav"),
+            new HemaStatusMap("Verzonden",new []{"ARRIVED_AT_DELIVERY_FACILITY","CUSTOMS","DELIVERY_PLANNED_IN_ROUTE","DEPART_FACILITY","DEPOT_SCAN","EXCEPTION","GATEWAY_DEPARTED","IN_DELIVERY","INFORMATION_ON_DELIVERY_TRANSMITTED","NEW_DELIVERY_ATTEMPT","OUT_FOR_DELIVERY","PARCEL_ARRIVED_AT_LOCAL_DEPOT","PARCEL_SORTED_AT_HUB","ROUTE_IN_SCAN","SCAN_OK_GATEWAY","TRANSPORT_DELAY","UNKNOWN","AWAITING_RECEIVER_COLLECTION#Thuisbezorgd","UNDERWAY#Thuisbezorgd"}),
+            new HemaStatusMap("Levering Mislukt",new []{"CLOSED_SHIPMENT","DELIVERED_AT_SHIPPER","DESTROYED","PARCEL_READY_FOR_RETURN_TO_HUB","PARCEL_SCANNED_AT_RETURN_HUB","SHIPMENT_STOPPED","RETURNED_TO_SHIPPER#Afhaalpunt","REFUSED_DAMAGED#Thuisbezorgd","RETURNED_TO_SHIPPER#Thuisbezorgd"}),
+            new HemaStatusMap("Geleverd aan klant",new []{"COLLECTED_AT_PARCELSTATION","COLLECTED_AT_ACCESSPOINT#Afhaalpunt","COLLECTED_AT_ACCESSPOINT#Thuisbezorgd","COLLECTED_AT_PARCELSHOP#Thuisbezorgd","DELIVERED#Thuisbezorgd","DELIVERED_AT_NEIGHBOURS#Thuisbezorgd","DELIVERED_AT_PREFERED_NEIGHBOURS#Thuisbezorgd","DELIVERED_DAMAGED#Thuisbezorgd","DELIVERED_NOT_IN_TIME#Thuisbezorgd","PARTIAL_DELIVERY#Thuisbezorgd"}),
+            new HemaStatusMap("Voorgemeld aan carrier",new []{"INTERVENTION","LEG","LEG_CREATED","PROBLEM","DATA_RECEIVED#Ophalen filiaal","DATA_RECEIVED#Thuisbezorgd"}),
+            new HemaStatusMap("Geleverd aan service point",new []{"AWAITING_RECEIVER_COLLECTION#Afhaalpunt","DELIVERED_AT_PARCELSHOP#Afhaalpunt"}),
+            new HemaStatusMap("In ontvangst genomen door klant",new []{"COLLECTED_AT_PARCELSHOP#Afhaalpunt"}),
+            new HemaStatusMap("Geleverd aan winkel",new []{"DELIVERED#Ophalen filiaal","DELIVERED_DAMAGED#Ophalen filiaal","DELIVERED_NOT_IN_TIME#Ophalen filiaal"}),
+            new HemaStatusMap("Ingepakt en klaar voor verzending",new []{"UNDERWAY#Ophalen filiaal"})
         };
 
-        public BackendClassContainingMappingVM(WithMapping backendClass) : base(backendClass)
+        [Fact]
+        public void Test1()
         {
-            Hobby = backendClass.Hobby;
-            Mappings = backendClass.Mappings;
-            Name = backendClass.Name;
-            Id = backendClass.Id;
-            RowVersion = backendClass.RowVersion;
-            childVM = backendClass.ToVM<ChildVM>();
-        }
+            var hemaDialogItem = new HemaDialogItem() { Name = "HemaItem", ResponseNoPackages = "No packages found.", HemaStatuses = statusMaps };
 
-        public WithMapping Map()
-        {
-            return new WithMapping(Mappings)
-            {
-                Name = childVM.Name,
-                Hobby = Hobby
-            };
-        }
-    }
+            var model = new BaseDialogItemViewModel();
+            var model2 = DialogItemViewModelFactory.GetViewModel(hemaDialogItem);
+            //var model2 = new BaseDialogItemViewModel();
+            //var model3 = new HemaDialogItemViewModel(new HemaDialogItem() { Name = "HemaItem", ResponseNoPackages = "No packages found.", HemaStatuses = statusMaps });
 
-    //backend entities, still use inheritance
-    public class Parent : BaseDialogItem
-    {
-        public int Age { get; set; }
-    }
-
-    public class Child : Parent
-    {
-        public string Hobby { get; set; }
-    }
-
-    public class WithMapping : Child
-    {
-        public IList<Mapping> Mappings { get; } = new List<Mapping>();
-        public WithMapping(IList<Mapping> mappings)
-        {
-            Mappings = mappings;
-        }
-    }
-
-    public sealed class Mapping
-    {
-        public string Key { get; set; }
-        public string Value { get; set; }
-
-        public static Mapping Create(string key, string value) => new Mapping(key, value);
-        private Mapping(string key, string value) => (Key, Value) = (key, value);
-    }
-
-    //helper class 
-    public static class BaseVMExtensions
-    {
-        public static TViewModel ToVM<TViewModel>(this BaseEntity entity)
-            where TViewModel : BaseVM
-        {
-            return (TViewModel)Activator.CreateInstance(typeof(TViewModel), entity);
+            var item = model.ToDialogItem(nameof(BaseFlowDialogItem));
+            var item2 = model2.ToDialogItem(nameof(HemaDialogItem));
+            //var item3 = model3.ToDialogItem(nameof(HemaDialogItem));
         }
     }
 }
