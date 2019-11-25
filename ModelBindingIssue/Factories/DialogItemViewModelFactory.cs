@@ -14,7 +14,7 @@ namespace ModelBindingIssue.Factories
                 _ => dialogItem.ToViewModel<BaseDialogItemViewModel>(),
             };
 
-            viewModel.Type = viewModel.GetType();
+            //viewModel.ActualType = viewModel.GetType().AssemblyQualifiedName;
             return viewModel;
         }
     }

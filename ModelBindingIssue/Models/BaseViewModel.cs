@@ -27,7 +27,7 @@ namespace ModelBindingIssue.Models
     [DebuggerStepThrough]
     public abstract class AbstractBaseViewModel : BaseViewModel
     {
-        public Type Type { get; set; }
+        public string ActualType => GetType().AssemblyQualifiedName;
 
         public AbstractBaseViewModel()
         {
@@ -40,6 +40,8 @@ namespace ModelBindingIssue.Models
 
     public class BaseDialogItemViewModel : AbstractBaseViewModel
     {
+        public string DialogItemType { get; set; }
+
         public Guid InteractionModelSectionId { get; set; }
         public string Name { get; set; }
         public int Ordering { get; set; }
@@ -50,25 +52,18 @@ namespace ModelBindingIssue.Models
         public BaseDialogItemViewModel() { }
         public BaseDialogItemViewModel(BaseDialogItem dialogItem) : base(dialogItem)
         {
-            viewModelType = Type.GetType($"{typeof(BaseDialogItemViewModel).Namespace}.{dialogItem.GetType().Name}ViewModel, {typeof(BaseDialogItemViewModel).Assembly.FullName}");
+            DialogItemType = dialogItem.GetType().AssemblyQualifiedName;
             FromDialogItem(dialogItem);
         }
 
-        private readonly Type viewModelType = Type.GetType($"{typeof(BaseDialogItemViewModel).Namespace}.{nameof(BaseDialogItemViewModel)}, {typeof(BaseDialogItemViewModel).Assembly.FullName}");
-
-        private static readonly string @namespace = typeof(BaseDialogItem).Namespace;
-        private static readonly string assemblyName = typeof(BaseDialogItem).Assembly.FullName;
-
-        public BaseDialogItem ToDialogItem(string className)
+        public BaseDialogItem ToDialogItem()
         {
-            Type type = Type = Type.GetType($"{@namespace}.{className}, {assemblyName}");
-
-            var mapper = viewModelType.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapper<>));
-            var mapperMethod = mapper?.GetMethod(nameof(IMapper<object>.Map));
-            if (mapperMethod is object)
+            if (TryGetMapperMethod(out MethodInfo? mapperMethod))
             {
                 return (BaseDialogItem)mapperMethod.Invoke(this, null);
             }
+
+            Type type = Type.GetType(DialogItemType);
 
             MethodInfo method = GetType().GetMethod(nameof(BaseDialogItemViewModel.To), BindingFlags.NonPublic | BindingFlags.Instance);
             MethodInfo generic = method.MakeGenericMethod(type);
@@ -84,14 +79,12 @@ namespace ModelBindingIssue.Models
 
         private void FromDialogItem(BaseDialogItem dialogItem)
         {
-            Type type = Type.GetType($"{@namespace}.{dialogItem.GetType().Name}, {assemblyName}");
-
-            var mapper = viewModelType?.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapper<>));
-            var mapperMethod = mapper?.GetMethod(nameof(IMapper<object>.Map));
-            if (mapperMethod is object)
+            if (TryGetMapperMethod(out _))
             {
                 return;
             }
+
+            Type type = Type.GetType(DialogItemType);
 
             MethodInfo method = GetType().GetMethod(nameof(BaseDialogItemViewModel.From), BindingFlags.NonPublic | BindingFlags.Instance);
             MethodInfo generic = method.MakeGenericMethod(type);
@@ -101,6 +94,13 @@ namespace ModelBindingIssue.Models
         private void From<TBaseDialogItem>(TBaseDialogItem dialogItem) where TBaseDialogItem : BaseDialogItem
         {
             PropertyCopy.Copy(dialogItem, this);
+        }
+
+        private bool TryGetMapperMethod(out MethodInfo? mapperMethod)
+        {
+            var mapper = Type.GetType(ActualType)?.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapper<>));
+            mapperMethod = mapper?.GetMethod(nameof(IMapper<object>.Map));
+            return mapperMethod is object;
         }
     }
 }

@@ -36,7 +36,7 @@ namespace ModelBindingIssue.Models
                 //Enabled = item.Enabled;
             }
 
-            foreach (var dialogItem in new Type[] { typeof(BaseFlowDialogItem), typeof(HemaDialogItem) })
+            foreach (var dialogItem in Database.DialogItemTypes.Select(s => s.Key))
             {
                 DialogItemTypes.Add(new SelectListItem()
                 {

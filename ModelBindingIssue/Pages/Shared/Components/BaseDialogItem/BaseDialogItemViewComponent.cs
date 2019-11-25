@@ -14,20 +14,16 @@ namespace ModelBindingIssue.Pages.Components.BaseDialogItems
     {
         private const string DefaultViewName = "Default";
 
-        //"[Namespace].[ClassName], [AssemblyName]" <- required typename due to different assemblies.
-        private static readonly string @namespace = typeof(BaseDialogItem).Namespace;
-        private static readonly string assemblyName = typeof(BaseDialogItem).Assembly.FullName;
-
         //TODO: change to factory to handle dependency injection per concrete type.
-        public async Task<IViewComponentResult> InvokeAsync(ItemWrapperViewModel interactionModelSectionItemViewModel)
+        //public async Task<IViewComponentResult> InvokeAsync(ItemWrapperViewModel interactionModelSectionItemViewModel)
+        public async Task<IViewComponentResult> InvokeAsync(BaseDialogItemViewModel dialogItemViewModel)
         {
-            string className = interactionModelSectionItemViewModel.SelectedDialogItemType;
-            Type type = Type.GetType($"{@namespace}.{className}, {assemblyName}");
+            Type type = Type.GetType(dialogItemViewModel.DialogItemType);
 
-            if (!ViewComponentContext.ViewExists(className))
+            if (!ViewComponentContext.ViewExists(type.Name))
             {
                 //view doesnt exist/can't be found so show default, instead of throwing exceptions.
-                return View(DefaultViewName, DialogItemViewModelFactory.GetViewModel((BaseDialogItem)Activator.CreateInstance(type)));
+                return View(DefaultViewName, dialogItemViewModel);
             }
 
             //if (type == typeof(CharacteristicDialogItem))
@@ -38,13 +34,12 @@ namespace ModelBindingIssue.Pages.Components.BaseDialogItems
             //}
 
             //check if we have a custom viewmodel for this dialogitem
-            //interactionModelSectionItemViewModel.DialogItem = DialogItemViewModelFactory.GetViewModel((BaseDialogItem)Activator.CreateInstance(type));
-            var item = DialogItemViewModelFactory.GetViewModel((BaseDialogItem)Activator.CreateInstance(type));
+            //this is just so that we dont have to fix the broken ui if we have no mappings
             if (type == typeof(HemaDialogItem))
             {
-                ((HemaDialogItemViewModel)item).Mappings.Add(new HemaStatusMapViewModel("test", "value"));
+                ((HemaDialogItemViewModel)dialogItemViewModel).Mappings.Add(new HemaStatusMapViewModel("test", "value"));
             }
-            return View(className, item);
+            return View(type.Name, dialogItemViewModel);
         }
 
     }

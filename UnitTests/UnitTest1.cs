@@ -51,7 +51,7 @@ namespace UnitTests
                 Age = 8,
             });
 
-            BaseDialogItem child = childvm.ToDialogItem(typeof(ChildVM).Name);
+            BaseDialogItem child = childvm.ToDialogItem();
             Assert.IsType<Child>(child);
 
             Parent parent = childvm.Map();
@@ -84,8 +84,8 @@ namespace UnitTests
             //var model2 = new BaseDialogItemViewModel();
             //var model3 = new HemaDialogItemViewModel(new HemaDialogItem() { Name = "HemaItem", ResponseNoPackages = "No packages found.", HemaStatuses = statusMaps });
 
-            var item = model.ToDialogItem(nameof(BaseFlowDialogItem));
-            var item2 = model2.ToDialogItem(nameof(HemaDialogItem));
+            var item = model.ToDialogItem();
+            var item2 = model2.ToDialogItem();
             //var item3 = model3.ToDialogItem(nameof(HemaDialogItem));
         }
     }

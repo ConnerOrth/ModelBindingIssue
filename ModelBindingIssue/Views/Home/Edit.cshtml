@@ -56,8 +56,6 @@
         function LoadViewComponentForType(event) {
             var selectElement = $(event.target);
             var dialogItemContainer = $("#dialogItemContainer");
-            console.log($("#EditInteractionModelSectionItem").serialize());
-            //console.log(dialogItemContainer);
             $.ajax({
                 url: '/DialogItem/Update',
                 method: "POST",

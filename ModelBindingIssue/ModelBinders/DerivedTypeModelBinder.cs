@@ -19,7 +19,7 @@ namespace ModelBindingIssue.ModelBinders
 
             var assembly = typeof(AbstractBaseViewModel).Assembly;
             var subclasses = assembly.GetExportedTypes()
-                .Where(t => !t.IsInterface && (t.BaseType.Equals(typeof(AbstractBaseViewModel)) || typeof(AbstractBaseViewModel).IsAssignableFrom(t)) && !t.IsAbstract)
+                .Where(t => !t.IsInterface && typeof(AbstractBaseViewModel).IsAssignableFrom(t) && !t.IsAbstract)
                 .ToList();
 
             var binders = new Dictionary<Type, (ModelMetadata, IModelBinder)>();
@@ -44,16 +44,14 @@ namespace ModelBindingIssue.ModelBinders
 
         public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
-            var modelKindName = ModelNames.CreatePropertyModelName(bindingContext.ModelName, nameof(AbstractBaseViewModel.Type));
+            var modelKindName = ModelNames.CreatePropertyModelName(bindingContext.ModelName, nameof(AbstractBaseViewModel.ActualType));
             var modelTypeValue = bindingContext.ValueProvider.GetValue(modelKindName).FirstValue;
 
             IModelBinder modelBinder;
             ModelMetadata modelMetadata;
             if (binders.TryGetValue(Type.GetType(modelTypeValue), out (ModelMetadata, IModelBinder) metaDataBinder))
-            //if (modelTypeValue == typeof(HemaDialogItemViewModel).ToString())
             {
                 (modelMetadata, modelBinder) = metaDataBinder;
-                //(modelMetadata, modelBinder) = binders[typeof(HemaDialogItemViewModel)];
             }
             else
             {

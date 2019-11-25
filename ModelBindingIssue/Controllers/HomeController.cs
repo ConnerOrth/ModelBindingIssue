@@ -25,34 +25,7 @@ namespace ModelBindingIssue.Controllers
 
         public IActionResult Index()
         {
-            var hemaDialogItem = Database.HemaDialogItem;
-
-            HemaDialogItemViewModel model = (HemaDialogItemViewModel)DialogItemViewModelFactory.GetViewModel(hemaDialogItem);
-            return View(model);
-        }
-
-        public IActionResult Index2()
-        {
-            var baseDialogItem = new BaseFlowDialogItem() { Name = "HemaItem" };
-
-            BaseDialogItemViewModel model = DialogItemViewModelFactory.GetViewModel(baseDialogItem);
-            return View(model);
-        }
-
-        [HttpPost]
-        //public IActionResult Post([Bind("Id,Name,Number,Mappings,ResponseNoPackages")] BaseDialogItemViewModel model)
-        public IActionResult Post(AbstractBaseViewModel model)
-        {
-            string form = null;
-            foreach (var item in Request.Form)
-            {
-                form += $"{{\"{item.Key}\",\"{item.Value}\"}}," + Environment.NewLine;
-            }
-            if (ModelState.IsValid)
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            return RedirectToAction(nameof(Index));
+            return View();
         }
 
         public IActionResult Create()
@@ -90,6 +63,9 @@ namespace ModelBindingIssue.Controllers
                 //return RedirectToAction(nameof(DetailsSection), new { ids });
             }
             _logger.LogDebug(JsonConvert.SerializeObject(model, Formatting.Indented));
+            var dialogItem = ((BaseDialogItemViewModel)model).ToDialogItem();
+            _logger.LogDebug(JsonConvert.SerializeObject(dialogItem, Formatting.Indented));
+
             return View(new ItemWrapperViewModel(null) { InteractionModelSectionId = Database.Section.Id });
         }
 
@@ -98,41 +74,32 @@ namespace ModelBindingIssue.Controllers
             var hemaDialogItem = Database.HemaDialogItem;
 
             ItemWrapperViewModel itemWrapper = new ItemWrapperViewModel(hemaDialogItem);
+            TempData.Set<BaseDialogItem>(itemWrapper.SelectedDialogItemType, hemaDialogItem);
             TempData.Set<BaseDialogItem>(itemWrapper.DialogItem.GetType().Name, hemaDialogItem);
 
             return View(itemWrapper);
         }
-        //[HttpPost]
-        //public IActionResult Post([Bind("Name,Number")] ViewModel model)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        return View(nameof(Index));
-        //    }
-        //    DBModel dbModel = model.Map();
-        //    return View(nameof(Index), new ViewModel() { Name = model.Name, Number = model.Number });
-        //}
+
+        [HttpPost]
+        public IActionResult Edit(AbstractBaseViewModel model)
+        {
+            var hemaDialogItem = Database.HemaDialogItem;
+
+            ItemWrapperViewModel itemWrapper = new ItemWrapperViewModel(hemaDialogItem);
+            TempData.Set<BaseDialogItem>(itemWrapper.SelectedDialogItemType, hemaDialogItem);
+            TempData.Set<BaseDialogItem>(itemWrapper.DialogItem.GetType().Name, hemaDialogItem);
+
+            _logger.LogDebug(JsonConvert.SerializeObject(model, Formatting.Indented));
+            var dialogItem = ((BaseDialogItemViewModel)model).ToDialogItem();
+            _logger.LogDebug(JsonConvert.SerializeObject(dialogItem, Formatting.Indented));
+
+            return View(itemWrapper);
+        }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
-    }
-
-    public class ViewModel : IMapper<DBModel>
-    {
-        [Required(ErrorMessage = "The name property is a required property.")]
-        public string Name { get; set; }
-        [Range(10, 100, ErrorMessage = "Range should be more than 9 and less than 101.")]
-        public int Number { get; set; }
-
-        public DBModel Map() => new DBModel() { Name = Name, Number = Number };
-    }
-
-    public class DBModel
-    {
-        public string Name { get; set; }
-        public int Number { get; set; }
     }
 }
